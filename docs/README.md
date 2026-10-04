@@ -7,3 +7,6 @@ This Kotlin/JVM library supplies the geometry used to connect image preprocessin
 - [Package map](packages.md): production and test responsibilities.
 
 The core module depends on these types. See [build configuration](../build.gradle.kts) for the module boundary.
+
+- [Installation](../IMPORT.md): authoritative confirmed Maven coordinates and version.
+- [Release runbook](releases.md): publishing setup and recovery.

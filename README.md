@@ -2,6 +2,14 @@
 
 Kotlin/JVM geometry library for pixel and normalized coordinates, image spaces, and directional transformations. Package names remain `com.apexfission.android.math`.
 
+## Maven installation and releases
+
+Read [IMPORT.md](IMPORT.md) for authoritative Maven coordinates, confirmed released
+versions, and dependency examples. Humans and AI agents must use that file rather
+than infer versions from source or tags. See the [release runbook](docs/releases.md)
+for environment setup, manual publishing, and recovery. No release is performed
+by committing or pushing source changes.
+
 ## Build and test
 
 Use JDK 17 or newer to run Gradle. Library bytecode targets JVM 11; an Android SDK is not required.
@@ -25,7 +33,8 @@ include(":coordinates")
 The host version catalog must provide `libs.plugins.jetbrains.kotlin.jvm`, `libs.junit`, and `libs.androidx.compose.runtime`, matching this repository's `gradle/libs.versions.toml`. The host must configure Google and Maven Central repositories.
 
 Then add `implementation(project(":coordinates"))` to consuming modules.
-No Maven publication is configured by this extraction.
+Maven publication is configured for standalone builds. Source-module consumers keep
+their local project dependencies; publishing is managed in this repository.
 
 ## Documentation
 
