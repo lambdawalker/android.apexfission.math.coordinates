@@ -71,10 +71,10 @@ mavenPublishing {
 
 // Ship the maintained guides in the documentation classifier; do not pretend
 // that Java's javadoc tool generates an API reference for Kotlin sources.
-tasks.withType<Jar>().configureEach {
-    if (name == "emptyJavadocJar") {
-        from("docs/guide.md", "docs/packages.md", "README.md", "LICENSE")
-    }
+tasks.named<com.vanniktech.maven.publish.tasks.JavadocJar>("emptyJavadocJar") {
+    from("docs/guide.md", "docs/packages.md", "README.md", "LICENSE")
+}
+tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
     isPreserveFileTimestamps = false
     isReproducibleFileOrder = true
 }
