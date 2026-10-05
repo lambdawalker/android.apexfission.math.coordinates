@@ -36,8 +36,9 @@ dependencies {
 }
 
 mavenPublishing {
-    configure(KotlinJvm(javadocJar = JavadocJar.Empty(), sourcesJar = SourcesJar.Sources()))
+    // Set coordinates before creating publications, which finalizes these values.
     coordinates(publicationGroup, publicationArtifact, releaseVersion.orElse("0.0.0-SNAPSHOT").get())
+    configure(KotlinJvm(javadocJar = JavadocJar.Empty(), sourcesJar = SourcesJar.Sources()))
     publishToMavenCentral()
     // Ordinary builds and the local verification repository never need secrets.
     if (providers.gradleProperty("signingInMemoryKey").isPresent) signAllPublications()
