@@ -10,3 +10,7 @@ The core module depends on these types. See [build configuration](../build.gradl
 
 - [Installation](../IMPORT.md): authoritative confirmed Maven coordinates and version.
 - [Release runbook](releases.md): publishing setup and recovery.
+
+## Audience entry points
+
+[Human site](https://lambdawalker.github.io/android.apexfission.math.coordinates/) · [Agent Markdown](agents/index.md) · [Documentation maintenance](documentation.md) · [Executable recipes](agents/recipes.md)

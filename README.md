@@ -48,4 +48,13 @@ their local project dependencies; publishing is managed in this repository.
 Extracted without Kotlin source or test changes from the `coordinates` module of
 [android.card_detection_lite](https://github.com/lambdawalker/android.card_detection_lite)
 at commit `3c2700d2bea1171a044473a58f25153df928bf88`.
-The original repository consumes this library as a pinned Git submodule.
+This extraction origin is historical context; consult the host repository for its current dependency integration.
+
+## Documentation audiences
+
+- [Human documentation site](https://lambdawalker.github.io/android.apexfission.math.coordinates/): installation, concepts, exact API contracts and runnable recipes.
+- [AI agent entry point](docs/agents/index.md): focused Markdown; no HTML scraping.
+- [Executable documentation demo](src/test/java/com/apexfission/android/math/examples/DocumentationExamplesTest.kt): `./gradlew runExamples`.
+- [Documentation maintenance and coverage](docs/documentation.md).
+
+The site tracks main. IMPORT.md records the confirmed release.

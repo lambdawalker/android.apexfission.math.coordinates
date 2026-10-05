@@ -1,0 +1,10 @@
+# Apexfission Coordinates
+
+Kotlin/JVM pixel and normalized geometry. Documentation tracks main; installation records the confirmed release.
+
+- [Agent entry point](agents/index.md)
+- [Installation](IMPORT.md)
+- [API contracts](agents/api.md)
+- [Recipes](agents/recipes.md)
+- [Limitations](agents/limitations.md)
+- [Repository](https://github.com/lambdawalker/android.apexfission.math.coordinates)

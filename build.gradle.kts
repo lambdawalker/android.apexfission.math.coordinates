@@ -72,7 +72,8 @@ mavenPublishing {
 // Ship the maintained guides in the documentation classifier; do not pretend
 // that Java's javadoc tool generates an API reference for Kotlin sources.
 tasks.named<com.vanniktech.maven.publish.tasks.JavadocJar>("emptyJavadocJar") {
-    from("docs/guide.md", "docs/packages.md", "README.md", "LICENSE")
+    from("README.md", "IMPORT.md", "LICENSE")
+    from("docs") { into("docs") }
 }
 tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
     isPreserveFileTimestamps = false
@@ -110,4 +111,13 @@ listOf("generateImportDocs" to "generate", "verifyImportDocs" to "verify").forEa
         workingDir(projectDir)
         commandLine("python3", "scripts/release.py", command)
     }
+}
+
+// Executable documentation uses the test classpath and never enters the published JAR.
+tasks.register<JavaExec>("runExamples") {
+    group = "verification"
+    description = "Run and assert the coordinate documentation scenarios."
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.apexfission.android.math.examples.DocumentationExamplesTestKt")
 }

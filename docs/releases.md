@@ -200,9 +200,7 @@ Do not upload again. Automated finalization deliberately stops on these manually
 changed installation files; complete the final tag bookkeeping manually under the
 repository's existing rules. A subsequent completed recovery verifies the result.
 
-There is no documentation site workflow in this repository. If one is added,
-remember that GITHUB_TOKEN docs commits do not normally trigger push workflows;
-use a trusted successful `workflow_run` or another explicit supported trigger.
+The independent [documentation workflow](documentation.md) deploys the human site and raw agent guides. It uses a trusted successful `workflow_run` to refresh installation docs after GITHUB_TOKEN release commits, which do not normally trigger push workflows. Maven publication remains manual.
 No GitHub Release or demo APK is created; the release is the Maven artifact set
 and its source tag.
 

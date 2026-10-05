@@ -1,0 +1,21 @@
+:root {
+  --sl-font: 'Avenir Next', 'Segoe UI', sans-serif;
+  --sl-font-mono: 'SFMono-Regular', Consolas, monospace;
+  --sl-color-accent-low: #d9f8ee;
+  --sl-color-accent: #126955;
+  --sl-color-accent-high: #0b4339;
+  --sl-color-bg: #f8faf7;
+  --sl-color-bg-nav: #f8faf7;
+  --sl-color-bg-sidebar: #f4f8f5;
+  --sl-color-text-accent: #126955;
+}
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #113a34;
+  --sl-color-accent: #70dec2;
+  --sl-color-accent-high: #d5fcf0;
+  --sl-color-bg: #0b171b;
+  --sl-color-bg-nav: #101f23;
+  --sl-color-bg-sidebar: #102024;
+  --sl-color-text-accent: #8debcf;
+}
+.sl-markdown-content img { max-width: 100%; height: auto; border-radius: .75rem; }

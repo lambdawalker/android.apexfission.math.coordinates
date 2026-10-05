@@ -1,0 +1,14 @@
+---
+import DefaultBanner from '@astrojs/starlight/components/Banner.astro';
+---
+<DefaultBanner />
+<aside class="version-notice" aria-label="Documentation version">
+  <strong>Development documentation (main).</strong>
+  Source APIs may be newer than the published artifact.
+  <a href="/android.apexfission.math.coordinates/installation/">Check the confirmed release</a>.
+  Feature-by-release availability has not been established.
+</aside>
+<style>
+  .version-notice { padding: .75rem 1.5rem; background: var(--sl-color-bg-nav); border-bottom: 1px solid var(--sl-color-hairline); font-size: .875rem; }
+  a { color: var(--sl-color-text-accent); text-decoration: underline; }
+</style>
