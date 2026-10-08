@@ -1,8 +1,0 @@
-.gradle/
-.kotlin/
-build/
-.idea/
-*.iml
-local.properties
-__pycache__/
-*.pyc

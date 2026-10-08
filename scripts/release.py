@@ -134,7 +134,7 @@ def verify_artifact(data, suffix, group, artifact, version):
         for variant in variants:
             attrs = variant['attributes']
             if attrs.get('org.gradle.jvm.version') != 11 or attrs.get('org.jetbrains.kotlin.platform.type') != 'jvm':
-                raise ValueError('Unexpected Gradle JVM target/platform')
+                raise ValueError(f'Unexpected Gradle JVM target/platform: {attrs!r}')
             deps = variant.get('dependencies', [])
             if any(d.get('group', '').startswith('androidx.compose') for d in deps):
                 raise ValueError('Compile-only Compose dependency leaked into Gradle metadata')
