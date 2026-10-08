@@ -29,3 +29,5 @@ for (const [source,slug,title] of [['IMPORT.md','installation','Installation'],[
  await write(resolve(site,`src/content/docs/${slug}.md`),`---\ntitle: ${title}\n---\n\n`+rewriteMarkdown(content.replace(/^# [^\n]+\n/,''),source,'human'));
  if (source === 'IMPORT.md') await write(resolve(site,'public/IMPORT.md'),rewriteMarkdown(content,source));
 }
+
+if (!process.argv.includes('--check')) await import('./sync-versioned.mjs');

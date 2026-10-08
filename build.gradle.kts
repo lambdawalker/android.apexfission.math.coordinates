@@ -9,6 +9,9 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.37.0"
 }
 
+val jitpackBuild = providers.gradleProperty("jitpackBuild").orElse("false").map { it.toBoolean() }
+val releaseRepository = providers.environmentVariable("RELEASE_REPOSITORY").orElse("maven-central")
+require(releaseRepository.get() in listOf("maven-central", "jitpack")) { "Unknown publication destination" }
 val releaseVersion = providers.gradleProperty("releaseVersion")
 require(releaseVersion.orNull?.matches(Regex("(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)")) != false) {
     "releaseVersion must be a stable X.Y.Z version"
@@ -37,11 +40,15 @@ dependencies {
 
 mavenPublishing {
     // Set coordinates before creating publications, which finalizes these values.
-    coordinates(publicationGroup, publicationArtifact, releaseVersion.orElse("0.0.0-SNAPSHOT").get())
+    coordinates(
+        if (jitpackBuild.get()) "com.github.lambdawalker" else publicationGroup,
+        if (jitpackBuild.get()) "android.apexfission.math.coordinates" else publicationArtifact,
+        if (jitpackBuild.get()) "coordinates~v${releaseVersion.get()}" else releaseVersion.orElse("0.0.0-SNAPSHOT").get()
+    )
     configure(KotlinJvm(javadocJar = JavadocJar.Empty(), sourcesJar = SourcesJar.Sources()))
-    publishToMavenCentral()
+    if (!jitpackBuild.get()) publishToMavenCentral()
     // Ordinary builds and the local verification repository never need secrets.
-    if (providers.gradleProperty("signingInMemoryKey").isPresent) signAllPublications()
+    if (!jitpackBuild.get() && providers.gradleProperty("signingInMemoryKey").isPresent) signAllPublications()
     pom {
         name.set("Apexfission Coordinates")
         description.set("Kotlin/JVM pixel and normalized geometry with directional image-space transformations.")
@@ -72,8 +79,8 @@ mavenPublishing {
 // Ship the maintained guides in the documentation classifier; do not pretend
 // that Java's javadoc tool generates an API reference for Kotlin sources.
 tasks.named<com.vanniktech.maven.publish.tasks.JavadocJar>("emptyJavadocJar") {
-    from("README.md", "IMPORT.md", "LICENSE")
-    from("docs") { into("docs") }
+    from("LICENSE")
+    from("docs/agents") { include("**/*.md"); into("docs") }
 }
 tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
     isPreserveFileTimestamps = false
@@ -92,7 +99,7 @@ publishing {
 val verifyCentralReservation = tasks.register<Exec>("verifyCentralReservation") {
     group = "publishing"
     workingDir(projectDir)
-    commandLine("python3", "scripts/release.py", "guard", "--version", releaseVersion.orElse("").get())
+    commandLine("python3", "scripts/module_release.py", "guard", "--module", "coordinates", "--version", releaseVersion.orElse("").get())
     doFirst {
         listOf("mavenCentralUsername", "mavenCentralPassword", "signingInMemoryKey").forEach {
             require(!providers.gradleProperty(it).orNull.isNullOrBlank()) { "Missing release credential: $it" }
@@ -109,7 +116,7 @@ listOf("generateImportDocs" to "generate", "verifyImportDocs" to "verify").forEa
         group = "documentation"
         description = "${command.replaceFirstChar { it.uppercase() }} installation documentation from confirmed release metadata"
         workingDir(projectDir)
-        commandLine("python3", "scripts/release.py", command)
+        commandLine("python3", "scripts/module_release.py", command)
     }
 }
 
@@ -120,4 +127,16 @@ tasks.register<JavaExec>("runExamples") {
     dependsOn(tasks.named("testClasses"))
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.apexfission.android.math.examples.DocumentationExamplesTestKt")
+}
+
+// JitPack is an unsigned, public MavenLocal build of this single root library.
+gradle.taskGraph.whenReady {
+    if (jitpackBuild.get()) {
+        require(allTasks.none { (it is org.gradle.api.publish.maven.tasks.PublishToMavenRepository && it.repository.name != "verification") || it.name.contains("MavenCentral", ignoreCase = true) }) {
+            "JitPack only supports MavenLocal and local verification publication"
+        }
+    }
+    if (allTasks.any { it.name.contains("MavenCentral", ignoreCase = true) }) {
+        require(releaseRepository.get() == "maven-central" && !jitpackBuild.get()) { "Central task does not match destination" }
+    }
 }

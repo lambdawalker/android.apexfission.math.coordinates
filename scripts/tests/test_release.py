@@ -35,7 +35,7 @@ def jar(name, data):
 def artifacts():
     return {'.pom': pom(), '.jar': jar('com/apexfission/android/math/Point.class', b'\xca\xfe\xba\xbe\x00\x00\x00\x37'),
             '-sources.jar': jar('Point.kt', 'class Point'), '-javadoc.jar': jar('guide.md', 'Geometry'),
-            '.module': json.dumps({'component': {'group': 'org.example', 'module': 'coordinates', 'version': '1.2.3'}}).encode()}
+            '.module': json.dumps({'component': {'group': 'org.example', 'module': 'coordinates', 'version': '1.2.3'}, 'variants': [{'attributes': {'org.gradle.usage': usage, 'org.gradle.jvm.version': 11, 'org.jetbrains.kotlin.platform.type': 'jvm'}, 'dependencies': [{'group': 'org.jetbrains.kotlin', 'module': 'kotlin-stdlib'}]} for usage in ('java-api', 'java-runtime')]}).encode()}
 
 
 def record():

@@ -1,21 +1,5 @@
-<!-- GENERATED FILE. Edit docs/templates/IMPORT.md.template.
-Regenerate: ./gradlew generateImportDocs
-Released metadata: docs/release.json (written only after public verification).
--->
-# Install Apexfission Coordinates
+# Installation
 
-{{STATUS}}
-
-This is the authoritative installation, Maven coordinate, and released-version
-reference for humans and AI agents. Read this file instead of guessing a version.
+Generated from confirmed destination records. JVM 11 compatible; no Android SDK is required.
 
 {{INSTALLATION}}
-
-This is a Kotlin/JVM JAR targeting JVM 11, suitable for Android and JVM projects.
-It has no Android SDK, CameraX, bitmap, or TFLite dependency. Kotlin standard
-library is transitive; Compose runtime is compile-only for stability annotations
-and is not a transitive runtime requirement. Kotlin consumers need a compiler
-compatible with the published Kotlin metadata (currently built using Kotlin 2.4.20).
-
-See the [geometry guide](docs/guide.md) for usage and
-[release runbook](docs/releases.md) for publishing and recovery.

@@ -4,3 +4,9 @@ dist/
 public/agents/
 public/IMPORT.md
 src/content/docs/
+
+/public/en/
+/public/es/
+/public/versions.json
+/src/versions.json
+/src/build.json

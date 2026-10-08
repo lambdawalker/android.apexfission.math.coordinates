@@ -1,212 +1,69 @@
-# Maven Central release runbook
+# Coordinates release runbook
 
-## Publication and compatibility
+Coordinates is one **root Kotlin/JVM library**, published as a JAR with JVM 11 bytecode. Keep the existing Gradle 9.6.0 wrapper, Kotlin 2.4.20 and JDK 17. No Android SDK, variants, demo APK, or Android publication tasks are involved. Kotlin stdlib is a public dependency; compile-only Compose runtime must not appear in the POM or Gradle dependencies.
 
-This repository publishes one Kotlin/JVM artifact, configured by `GROUP` and
-`POM_ARTIFACT_ID` in `gradle.properties`. It is a JAR, not an Android AAR; there
-are no Android variants or application modules. The library retains its
-`com.apexfission.android.math` Kotlin packages and JVM 11 bytecode.
+## Owner setup
 
-Build tools: the existing Gradle 9.6.0 wrapper, Kotlin 2.4.20, JDK 17 to run
-Gradle, and Python 3.12 for release tooling. No Android SDK is required. The
-Vanniktech publishing plugin is pinned to 0.37.0. A publication includes the main
-JAR, sources JAR, documentation JAR, POM, Gradle module metadata, and detached
-ASCII-armored signatures. The documentation classifier contains the maintained
-Markdown guides, not a generated Dokka API reference. Compile-only Compose
-annotations do not become a transitive runtime dependency; Kotlin stdlib does.
+Reuse the repository's **maven-central** environment and existing `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_IN_MEMORY_KEY`, and optional `SIGNING_IN_MEMORY_KEY_PASSWORD` secrets. The namespace is `com.apexfission.android.math`, artifact `coordinates`. Keep the signing public key available to Central. Public JitPack uses the **jitpack** environment with **no credentials**. Configure **delayed-docs** with a **15-minute environment wait timer**; YAML names this environment but cannot install its timer. The delay holds neither a runner nor the release lock.
 
-Humans and agents must read [IMPORT.md](../IMPORT.md) for installation and the
-last confirmed released coordinates. A development version is not a release.
-
-## Owner setup (before running anything)
-
-1. Create the **maven-central** GitHub environment in
-   **lambdawalker/android.apexfission.math.coordinates**. An environment in the
-   permissions repository does not apply here. Add any desired approvals and
-   restrict deployment branches to `main`.
-2. Verify ownership of the namespace covering `com.apexfission.android.math` in
-   Central Portal. This spelling is intentional; the permissions repository's
-   differently spelled Maven group was not copied. If your verified namespace
-   differs, change `GROUP` before the first release.
-3. Create a Central Portal user token. Add these environment secrets:
-
-   | Secret | Value |
-   | --- | --- |
-   | `MAVEN_CENTRAL_USERNAME` | Portal token username, not interactive login |
-   | `MAVEN_CENTRAL_PASSWORD` | Portal token password |
-   | `SIGNING_IN_MEMORY_KEY` | Complete ASCII-armored private signing key |
-   | `SIGNING_IN_MEMORY_KEY_PASSWORD` | Passphrase if the key is encrypted; otherwise omit |
-
-   Publish the corresponding public key to a Central-supported keyserver. Keep
-   private keys/tokens out of the repository and build caches. The release job
-   disables Gradle caching and passes secrets only to the publication step.
-4. Ensure repository rules permit the configured Actions bot to make the
-   documentation commit and create/delete attempt tags and create stable tags.
-   Do not add bypass credentials or weaken branch protection just to run this.
-   If direct bot writes are forbidden, follow the protected-branch procedure below.
-5. Decide the first stable version. No version has been assumed: supply
-   `initial_version`, such as `0.1.0`, on the first release run.
+The Actions identity must be permitted to create immutable tags, delete completed attempt markers, and advance main under existing branch rules. Do not introduce bypass credentials or weaken protection. The registry in `publishing/repositories.yml` enables exactly Central and JitPack; regenerate its dropdowns and public Gradle properties with `python3 scripts/publishing_config.py generate`. There is no generic/private Maven publishing path.
 
 ## Validate without publishing
 
-Run locally, or manually run **Verify release tooling (no publication)**. It
-also runs on pull requests; there is intentionally no push trigger in this setup.
-Neither workflow was dispatched while preparing this repository.
-
 ```bash
+python3 -m pip install -r scripts/requirements-publishing.txt
 python3 -m unittest discover -s scripts/tests -v
-python3 scripts/release.py verify
-bash -n scripts/finalize-release.sh
-./gradlew generateImportDocs verifyImportDocs build publishAllPublicationsToVerificationRepository -PreleaseVersion=9.8.7
-python3 scripts/release.py check-local --version 9.8.7 --source "$(git rev-parse HEAD)"
+python3 scripts/publishing_config.py check
+python3 scripts/module_release.py verify
+python3 scripts/documentation_history.py verify
+./gradlew test runExamples verifyImportDocs build publishAllPublicationsToVerificationRepository -PreleaseVersion=9.8.7
+python3 scripts/module_release.py check-local --module coordinates --version 9.8.7 --source "$(git rev-parse HEAD)"
+RELEASE_REPOSITORY=jitpack ./gradlew publishAllPublicationsToVerificationRepository -PjitpackBuild=true -PreleaseVersion=9.8.7
+RELEASE_REPOSITORY=jitpack python3 scripts/module_release.py check-local --module coordinates --version 9.8.7 --source "$(git rev-parse HEAD)"
+(cd sites && npm ci && npm run check)
 ```
 
-The verification repository is a local directory under `build/`, not Central.
-Use a clean tracked worktree: artifact validation checks the selected source SHA.
-The sentinel version `9.8.7` above is only local test data. It does not change
-installation documentation or reserve a release. On Windows use `gradlew.bat`;
-release helper execution requires a `python3` executable (WSL is suitable).
+Use a clean tracked checkout for `check-local`. These tasks write a local build repository only; `9.8.7` is test data. The verifier checks JAR class headers and JVM 11 target, Kotlin sources, text documentation, POM metadata/dependencies, and both Gradle API/runtime variants, JVM target and dependencies. New documentation JARs contain only `docs/agents/**/*.md` and LICENSE, excluding mutable installation records, translated site pages and media. Historical artifact verification preserves the original byte hashes.
 
-## Ordinary release
+## Shared version identity
 
-After setup, manually run **Publish coordinates library** on **main**. For the
-first release provide `initial_version`; thereafter leave both inputs empty.
-The workflow checks out the dispatch event's immutable SHA, not a later moving
-branch tip. It fetches full history/tags, verifies main ancestry, and allocates
-the next stable patch with numeric semantic ordering (`0.1.10` follows `0.1.9`).
+Run **Publish coordinates library** manually on main and select `maven-central` or `jitpack`. Leave version blank for automatic selection; an explicit stable X.Y.Z above the latest global identity permits a major/minor/patch override. Prereleases are not supported. New repositories require an explicit initial version; this repository already has proven 0.1.0 history.
 
-Prereleases and unrelated tags do not advance the stable stream. Major/minor
-changes and prerelease publication are intentionally unsupported by this
-workflow; introduce a reviewed policy change first. `initial_version` cannot
-be used to skip versions once stable history exists.
+The canonical tag is `coordinates/vX.Y.Z`. It identifies source, not successful publication. History includes confirmed destination records, historical immutable source tags, and durable pending/uploading tags. Semantic versions sort numerically. Conflicting source SHAs, older source checkouts, malformed/network-failed registry reads, untracked public collisions and unexplained newer Central versions stop publication.
 
-All stable `vX.Y.Z` tags must appear in Central metadata. Central ahead of an
-existing tagged stream stops allocation for provenance investigation. If there
-are published versions but no stable tags, allocation starts from their latest
-stable version without inventing historical tags. Only an actual HTTP 404 for
-metadata means no registry history; network failures, invalid XML, wrong identity,
-and empty malformed metadata stop the release.
+Unchanged inputs reuse the latest global version **and original source commit**, even when catching up another destination. A destination already confirming that identity exits without upload or mutation. Changed inputs on a descendant allocate the next global patch. Fingerprints include root `src/main`, build/settings files, Gradle catalog/wrapper, gradle.properties, LICENSE, canonical packaged guides, JitPack configuration, scripts except tests, public publishing configuration and the shared publication workflow. Generated IMPORT, release records, history, translations and site-only edits are excluded. Build protocol changes count as inputs, so an old release without JitPack support is never rebuilt by overlaying new tooling under its historical version.
 
-Tests and a complete local publication run before a reservation. The validator
-checks POM identity, license/developer/SCM metadata, dependency scopes, JVM class
-files, Kotlin sources, docs, and Gradle module identity. It records SHA-256 hashes
-of the entire intended unsigned publication set.
+Central coordinates remain `com.apexfission.android.math:coordinates:X.Y.Z`. JitPack uses `com.github.lambdawalker:android.apexfission.math.coordinates:coordinates~vX.Y.Z`, the provider's slash-tag consumer form. Its `jitpack.yml` validates the canonical tag and full commit SHA, then invokes the **root** `publishToMavenLocal` task with unsigned JitPack coordinates. Central credentials and signing are disabled in that mode.
 
-Before uploading, an annotated **release-pending/X.Y.Z** tag is durably pushed,
-pointing to the exact source commit. Its JSON journal contains version, coordinates,
-source, artifact suffixes/hashes, phase, and Actions run ID. The Gradle guard then
-creates **release-uploading/X.Y.Z** before any Central task can upload. A second
-upload attempt is rejected, including manual task invocations and workflow reruns.
-The repository-wide concurrency group serializes normal runs; the remote tags
-also guard against interrupted/manual attempts. Neither marker claims success.
+## Journal, publication and confirmation
 
-The actual remote task is:
+Tests, runnable examples, site checks and full local publication run before reservation. An atomic push reserves the canonical source tag (if absent) and annotated JSON journal `release-pending/coordinates/X.Y.Z` for Central or `release-pending/jitpack/coordinates/X.Y.Z` for JitPack. The journal records source, semantic/consumer versions, destination, coordinates and every artifact hash. Neither tag advertises availability.
 
-```bash
-./gradlew publishAndReleaseToMavenCentral -PreleaseVersion=X.Y.Z
-```
+Central's Gradle guard creates `release-uploading/coordinates/X.Y.Z` before any Central upload task; a second invocation is rejected. Use the workflow, never bypass the guard with a generic publication command. Upload logs are retained for 30 days. After the separate delay, finalization polls public bytes for up to 40 minutes and verifies every reserved hash plus detached signature presence. Central validates signature cryptography during deployment. JitPack requests the public artifact, polls up to 30 minutes, requires API success at the exact reserved commit, validates JAR/POM/source/docs and optional `.module`, and compares source/docs entry hashes with the candidate. Its provider-generated public hashes replace candidate byte hashes only after these checks.
 
-It requires credentials and the matching remote reservation; a bare invocation
-is intentionally insufficient. Development builds default to `0.0.0-SNAPSHOT`
-and cannot accidentally publish it. Use the workflow rather than bypassing its
-reservation/verification steps or running generic Gradle publish tasks manually.
+Only successful provider confirmation writes `docs/releases/coordinates.json` or `docs/releases/jitpack/coordinates.json`, archives the version in `docs/releases/history/coordinates/`, and regenerates IMPORT.md. The latest installation page advertises only destinations confirming the newest global available version. Older archives keep their own confirmed destinations. A newer Central release does not imply JitPack availability or vice versa.
 
-After the plugin returns, public confirmation polls for up to 40 minutes with
-bounded network retries. It checks every artifact's content and reserved hash,
-plus its detached signature file. Signature format/existence is checked locally;
-Central performs signature validation during deployment. This independently
-confirms public availability, not merely staging acceptance. Preserve the plugin
-log (uploaded as an Actions artifact for 30 days) and locate its deployment ID,
-when emitted, or find the version/run in Central Portal. Logs are not the durable
-journal; the pending tag survives runner loss.
+Finalization uses trusted current tooling, checks the journal's immutable source, preserves concurrent main changes, refuses same/newer destination metadata and protocol/renderer drift, then atomically pushes documentation and removes exact attempt tags. There is no force-push or tag movement. No release uploads occur in **Finalize coordinates release**.
 
-Only then are `docs/release.json` and `IMPORT.md` updated. The stable tag `vX.Y.Z`
-points to the artifact source SHA, not the later docs commit. The final push
-atomically advances main, creates the stable tag, and removes both attempt
-markers. No force push or existing tag movement is used.
+## Recovery and legacy migration
 
-## Generated installation reference
-
-Edit `docs/templates/IMPORT.md.template`; do not hand-maintain dependency versions
-in README, guides, or agent instructions. `generateImportDocs` and
-`verifyImportDocs` use `docs/release.json`, the last confirmed publication record.
-Before the first release that record is `null`, and IMPORT.md explicitly says no
-release is confirmed instead of offering an unpublished dependency.
-
-A new `releaseVersion` does not rewrite IMPORT.md. `release.py confirm` verifies
-the reserved public publication and writes the record before regeneration.
-Without confirmation, local regeneration retains released coordinates even when
-development coordinates change; verification flags that mismatch for review.
-Rendering is deterministic and rejects unknown placeholders.
-
-## Failure recovery
-
-Do not blindly rerun a failed normal publication. Inspect Actions logs, the JSON
-journal, both attempt markers, and Central Portal first:
+Inspect the original provider outcome before any retry:
 
 ```bash
 git fetch origin main --tags
-git show release-pending/X.Y.Z
 git ls-remote --refs origin 'refs/tags/release-*'
+git show release-pending/coordinates/X.Y.Z
 ```
 
-| Outcome | Safe next action |
+| State | Action |
 | --- | --- |
-| Validation failed before reservation | Fix/test and start a new normal run; nothing was uploaded. |
-| Reserved, but credentials/build failed before upload marker | Confirm no external deployment exists; follow the definitive-failure procedure below. |
-| Upload marker exists; timeout, lost runner, or unknown result | Keep both tags; inspect Portal. An upload may have been accepted. Never re-upload. |
-| Deployment is still processing | Wait for Portal to reach a terminal state; keep markers. |
-| Some artifacts/signatures are public | Keep markers; reconcile the whole intended publication set with Portal/Sonatype. Public artifacts are immutable; there is no automatic rollback. |
-| Published successfully, docs/tag push failed | Run with `resume_version=X.Y.Z`; leave `initial_version` empty. |
-| Exact release already finalized | Repeating recovery for the currently recorded release verifies public artifacts and exits without uploads or new commits. |
-| Existing stable tag points elsewhere | Stop and investigate; do not move it or invent provenance. |
+| Validation failed before reservation | Fix and run publication again. |
+| Journal exists, outcome unknown/processing/partial | Keep every marker; inspect Central Portal or JitPack logs. Never re-upload. |
+| Public artifacts complete, documentation push failed | Run **Finalize coordinates release** with the same destination/version. |
+| Already completed identity | Finalize validates the source and confirmed record, then exits without mutation. |
+| Provider definitively rejected and no artifact can become public | A maintainer may delete only that investigated pending/uploading pair. Preserve canonical source tags. |
+| Branch protection rejects docs | Keep journals; confirm, review generated IMPORT, latest record and archive in a PR, then have an authorized maintainer reconcile exact tags atomically. Never upload again. |
 
-Recovery resolves the original source from the annotated pending tag, skips tests,
-rebuilds, reservation, and upload, then verifies the original hash-identified
-artifact set. It retries docs and tag finalization only. Recovery never uses the
-newest main source as a substitute for the published source.
+Original `release-pending/X.Y.Z` and `release-uploading/X.Y.Z` markers block every new allocation. **Finalize coordinates release** on Central can read the original annotated journal, verify its exact bytes, normalize its identity without overwriting hashes, create/preserve its original `vX.Y.Z` source tag, archive it and atomically remove the legacy markers. Mixed legacy/scoped journals require investigation. An orphan upload marker is not proof of failure and must not be deleted automatically. The original `release.py` and shell recovery helper remain for regression coverage/historical recovery; new workflows exclusively use `module_release.py`.
 
-For a **definitively failed/rejected attempt**, first confirm with Central Portal
-that no deployment can still publish and that none of the intended artifacts are
-public. If any uncertainty remains, keep the reservation. Only after that manual
-investigation may a maintainer delete exactly that attempt's references:
-
-```bash
-# Replace X.Y.Z with the investigated failed version; never use a wildcard.
-git push --atomic origin :refs/tags/release-pending/X.Y.Z :refs/tags/release-uploading/X.Y.Z
-# Delete matching local tags too, if present, before retrying from this checkout.
-```
-
-If the uploading marker was never created, omit its deletion ref. Do not delete
-stable release tags. A confirmed rejection can be retried via a fresh normal run
-only after these exact markers are cleared; immutable published coordinates must
-never be reused.
-
-## Concurrent work and protected branches
-
-Finalization fetches current main and preserves unrelated commits. It stops when
-installation inputs, coordinates, version catalog, build files, or release tooling
-changed in flight. Reconcile these changes explicitly; never force main back to
-the source SHA. Fast-forward races and branch-protection rejection cause the
-atomic push to fail, retaining the reservation and original released-version docs.
-
-If branch protection requires PRs, after successful public confirmation create a
-PR containing **only IMPORT.md and docs/release.json** generated from the original
-journal (run `release.py confirm` at the recorded source). Review and merge through
-the existing repository process. Then an authorized maintainer should verify the
-merged files match the confirmed record/source and atomically create the stable
-tag at that source and delete the two exact attempt markers, without updating main.
-Do not upload again. Automated finalization deliberately stops on these manually
-changed installation files; complete the final tag bookkeeping manually under the
-repository's existing rules. A subsequent completed recovery verifies the result.
-
-The independent [documentation workflow](documentation.md) deploys the human site and raw agent guides. It uses a trusted successful `workflow_run` to refresh installation docs after GITHUB_TOKEN release commits, which do not normally trigger push workflows. Maven publication remains manual.
-No GitHub Release or demo APK is created; the release is the Maven artifact set
-and its source tag.
-
-## References checked for this setup
-
-- [Vanniktech Central publishing, credentials, and publish-and-release task](https://vanniktech.github.io/gradle-maven-publish-plugin/central/)
-- [Kotlin/JVM publication configuration](https://vanniktech.github.io/gradle-maven-publish-plugin/what/#kotlin-jvm-library)
-- [Central requirements](https://central.sonatype.org/publish/requirements/)
-- [Reference permissions release workflow](https://github.com/lambdawalker/android.apexfission.permissions/blob/main/.github/workflows/publish-permission.yml)
+`docs/release.json` remains the immutable legacy evidence for the confirmed 0.1.0 publication at `4af3c2e6e2c3bddc66552e0bcf5b3d65e9cb8415`, tagged `v0.1.0`. It is not the latest-release pointer. That proven record was migrated without republishing or inventing a source. Its archive's documentation_ref is the reviewed postrelease manual at `427c899c946199044a039737cc05ef19cef5c46b`: source under `src/main` and the dependency catalog match the release, while focused manuals were introduced later. The retained translation tree records reviewed Spanish guides separately; it does not claim Spanish pages shipped in the original JAR.
