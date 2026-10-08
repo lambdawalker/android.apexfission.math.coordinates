@@ -1,0 +1,14 @@
+# Limitaciones y contratos de entrada
+
+- Solo geometría numérica: no incluye renderizado, recorte de bitmaps, adaptadores de CameraX, inferencia de detectores, rotación, reflexión, perspectiva ni matrices afines generales. La aplicación anfitriona se encarga del procesamiento de imágenes y de la selección del marco.
+- Las dimensiones y las posiciones de píxel son UInt. Valida las entradas con signo antes de convertirlas. Las sobrecargas Int de las funciones de creación de puntos y rectángulos limitan los negativos a cero; una conversión directa con `.toUInt()` es una operación diferente.
+- Usa las funciones de creación de rectángulos. Los constructores directos de seis campos y el método `copy` de las clases de datos pueden producir esquinas y dimensiones incoherentes. Las funciones de creación normalizadas ordenan las esquinas o limitan los tamaños negativos, pero no restringen los valores a 0..1 ni rechazan NaN o infinito.
+- Valida que los valores normalizados sean finitos, las escalas sean finitas y positivas, y las dimensiones no sean cero cuando tu aplicación requiera un marco significativo. ImageSpace no impone estas restricciones. No confíes en las conversiones numéricas en tiempo de ejecución para sanear salidas no válidas del modelo.
+- `ImageBox.fromPS` satura los extremos en UInt.MAX_VALUE. Los desplazamientos saturan cada esquina por separado, por lo que el recorte puede reducir un rectángulo. Los getters Int pueden desbordarse con valores superiores a Int.MAX_VALUE.
+- La desnormalización usa únicamente las dimensiones, sin desplazamientos ni escalas. La conversión de puntos trunca los valores Float positivos. La conversión de rectángulos usa redondeo al par con aritmética Double y limita los resultados negativos a cero, pero no valida el límite superior; las entradas muy grandes pueden desbordarse durante la conversión de Long a UInt.
+- La traslación acepta límites iguales a width/height. La transformación de padre a hijo valida la entrada en el padre y después recorta la salida de destino. La transformación de hijo a padre comprueba los límites calculados en el padre y lanza IllegalArgumentException si no son válidos. `InvalidCoordinatesError` en los mensajes no es un tipo de excepción personalizado.
+- El encadenamiento puede perder información por el redondeo y el recorte intermedios. No se garantiza la reversibilidad de los recorridos de ida y vuelta.
+- La función auxiliar de puntos normalizados hacia el hijo usa las dimensiones del hijo; usa la [receta con un marco de origen explícito](recipes.md#normalize-relative-to-the-correct-source-frame).
+- Las anotaciones de estabilidad de las cadenas no congelan una lista mutable propiedad de quien llama.
+
+Estos son contratos observados en main, no promesas de que las funciones estén disponibles en todas las versiones. Consulta [migración](migration.md).

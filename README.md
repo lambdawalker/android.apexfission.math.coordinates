@@ -2,12 +2,12 @@
 
 Kotlin/JVM geometry library for pixel and normalized coordinates, image spaces, and directional transformations. Package names remain `com.apexfission.android.math`.
 
-## Maven installation and releases
+## Installation and releases
 
 Read [IMPORT.md](IMPORT.md) for authoritative Maven coordinates, confirmed released
 versions, and dependency examples. Humans and AI agents must use that file rather
 than infer versions from source or tags. See the [release runbook](docs/releases.md)
-for environment setup, manual publishing, and recovery. No release is performed
+for environment setup, manual publishing to Maven Central or JitPack, and recovery. Both destinations share immutable version/source identities; unchanged release inputs reuse the original version, and changed inputs advance the patch. No release is performed
 by committing or pushing source changes.
 
 ## Build and test
@@ -57,4 +57,4 @@ This extraction origin is historical context; consult the host repository for it
 - [Executable documentation demo](src/test/java/com/apexfission/android/math/examples/DocumentationExamplesTest.kt): `./gradlew runExamples`.
 - [Documentation maintenance and coverage](docs/documentation.md).
 
-The site tracks main. IMPORT.md records the confirmed release.
+The site provides English and Spanish guides with a version selector for development and confirmed releases. IMPORT.md lists the destinations holding the latest confirmed version; archived installation pages retain the instructions for their selected version. Release 0.1.0 keeps its original code identity and uses the subsequently added guides, reviewed against that unchanged library source. See the [documentation maintenance guide](docs/documentation.md) for translation freshness and provenance.

@@ -1,0 +1,19 @@
+{
+  "artifact": "coordinates",
+  "group": "com.apexfission.android.math",
+  "legacy_tag": "v0.1.0",
+  "module": "coordinates",
+  "phase": "confirmed-public",
+  "repository": "maven-central",
+  "repository_url": "https://repo.maven.apache.org/maven2",
+  "sha256": {
+    "-javadoc.jar": "a55c7219727dcf4fdc4aa73d96630fe2f4f385fa70a5549456a374f846298031",
+    "-sources.jar": "6bb4b5e8eeef9e6a03b22a70bda61b337e493cd100ffc368053c2fb5aa38f0bf",
+    ".jar": "a8def87a18281a11737ae346d113d7b8d007319429fc6dd31e5f23f7dfdf5997",
+    ".module": "8dca5cca55bcc34feb8da7d20034793ad64118617c4d2ce2f28f5d63f9d75552",
+    ".pom": "0d35605d4f925ef0684acfd46ad63b088e1929e428055b16e4a34de5dc035905"
+  },
+  "source": "4af3c2e6e2c3bddc66552e0bcf5b3d65e9cb8415",
+  "version": "0.1.0",
+  "workflow_run": "37261520689"
+}

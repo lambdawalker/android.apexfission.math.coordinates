@@ -128,6 +128,23 @@ def verify_artifact(data, suffix, group, artifact, version):
         module = json.loads(data)
         if tuple(module.get('component', {}).get(k) for k in ('group', 'module', 'version')) != (group, artifact, version):
             raise ValueError('Gradle module coordinates mismatch')
+        # Sources/documentation variants also use java-runtime, but have no
+        # executable JVM target or dependencies. Check only library variants.
+        variants = [v for v in module.get('variants', [])
+                    if v.get('attributes', {}).get('org.gradle.category') == 'library'
+                    and v['attributes'].get('org.gradle.usage') in ('java-api', 'java-runtime')]
+        if {v['attributes']['org.gradle.usage'] for v in variants} != {'java-api', 'java-runtime'}:
+            raise ValueError('Missing JVM API/runtime variants')
+        for variant in variants:
+            attrs = variant['attributes']
+            if attrs.get('org.gradle.jvm.version') != 11 or attrs.get('org.jetbrains.kotlin.platform.type') != 'jvm':
+                raise ValueError(f'Unexpected Gradle JVM target/platform: {attrs!r}')
+            deps = variant.get('dependencies', [])
+            if any(d.get('group', '').startswith('androidx.compose') for d in deps):
+                raise ValueError('Compile-only Compose dependency leaked into Gradle metadata')
+            if not any(d.get('group') == 'org.jetbrains.kotlin' and d.get('module') == 'kotlin-stdlib' for d in deps):
+                raise ValueError('Kotlin standard library missing from Gradle variant')
+
     else:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             if archive.testzip():
@@ -400,7 +417,8 @@ def main():
             p.add_argument('--timeout', type=int, default=2400)
     args = parser.parse_args()
     if args.command in ('generate', 'verify'):
-        documentation(args.command == 'verify')
+        import module_release
+        module_release.documentation(args.command == 'verify')
     elif args.command == 'prepare':
         prepare(args.resume, args.initial)
     elif args.command == 'check-local':
@@ -415,3 +433,11 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+def zip_contents(data):
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        if len(archive.namelist()) != len(set(archive.namelist())):
+            raise ValueError('Duplicate archive entries')
+        return {name: hashlib.sha256(archive.read(name)).hexdigest() for name in archive.namelist()
+                if not name.endswith('/') and name != 'META-INF/MANIFEST.MF'}

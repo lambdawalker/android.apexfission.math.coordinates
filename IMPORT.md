@@ -1,17 +1,30 @@
-<!-- GENERATED FILE. Edit docs/templates/IMPORT.md.template.
-Regenerate: ./gradlew generateImportDocs
-Released metadata: docs/release.json (written only after public verification).
--->
-# Install Apexfission Coordinates
+# Installation
 
-Confirmed release: **0.1.0** · Maven coordinates: `com.apexfission.android.math:coordinates:0.1.0`.
+Generated from confirmed destination records. JVM 11 compatible; no Android SDK is required.
 
-This is the authoritative installation, Maven coordinate, and released-version
-reference for humans and AI agents. Read this file instead of guessing a version.
+## coordinates: coordinates
 
-## Gradle Kotlin DSL
+Confirmed version: **0.1.0**. Source: [4af3c2e6e2c3bddc66552e0bcf5b3d65e9cb8415](https://github.com/lambdawalker/android.apexfission.math.coordinates/commit/4af3c2e6e2c3bddc66552e0bcf5b3d65e9cb8415).
 
-Add `mavenCentral()` to your settings repositories, then:
+Choose **one** destination below and **one** dependency syntax. Each destination provides this same release; do not add duplicate dependencies.
+
+### maven-central
+
+Repository: **maven-central**.
+
+#### Gradle Kotlin DSL
+
+In `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+```
+
+In the project's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
@@ -19,7 +32,19 @@ dependencies {
 }
 ```
 
-## Gradle Groovy DSL
+#### Gradle Groovy DSL
+
+In `settings.gradle`:
+
+```groovy
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+```
+
+In the project's `build.gradle`:
 
 ```groovy
 dependencies {
@@ -27,37 +52,39 @@ dependencies {
 }
 ```
 
-## Version catalog
+#### Version catalog
+
+Use the dependency repositories shown above. Add to `gradle/libs.versions.toml`:
 
 ```toml
-[versions]
-apexfission-coordinates = "0.1.0"
-
 [libraries]
-apexfission-coordinates = { module = "com.apexfission.android.math:coordinates", version.ref = "apexfission-coordinates" }
+coordinates = { module = "com.apexfission.android.math:coordinates", version = "0.1.0" }
 ```
+
+Then use this instead of the direct dependency in the project's `build.gradle.kts`:
 
 ```kotlin
-implementation(libs.apexfission.coordinates)
+dependencies {
+    implementation(libs.coordinates)
+}
 ```
 
-## Maven
+#### Maven
+
+Add these repositories and dependency to `pom.xml`:
 
 ```xml
-<dependency>
+<repositories>
+  <repository>
+    <id>central</id>
+    <url>https://repo.maven.apache.org/maven2</url>
+  </repository>
+</repositories>
+<dependencies>
+  <dependency>
     <groupId>com.apexfission.android.math</groupId>
     <artifactId>coordinates</artifactId>
     <version>0.1.0</version>
-</dependency>
+  </dependency>
+</dependencies>
 ```
-
-Built from source commit [`4af3c2e6e2c3bddc66552e0bcf5b3d65e9cb8415`](https://github.com/lambdawalker/android.apexfission.math.coordinates/commit/4af3c2e6e2c3bddc66552e0bcf5b3d65e9cb8415).
-
-This is a Kotlin/JVM JAR targeting JVM 11, suitable for Android and JVM projects.
-It has no Android SDK, CameraX, bitmap, or TFLite dependency. Kotlin standard
-library is transitive; Compose runtime is compile-only for stability annotations
-and is not a transitive runtime requirement. Kotlin consumers need a compiler
-compatible with the published Kotlin metadata (currently built using Kotlin 2.4.20).
-
-See the [geometry guide](docs/guide.md) for usage and
-[release runbook](docs/releases.md) for publishing and recovery.
