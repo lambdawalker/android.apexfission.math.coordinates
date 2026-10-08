@@ -128,7 +128,11 @@ def verify_artifact(data, suffix, group, artifact, version):
         module = json.loads(data)
         if tuple(module.get('component', {}).get(k) for k in ('group', 'module', 'version')) != (group, artifact, version):
             raise ValueError('Gradle module coordinates mismatch')
-        variants = [v for v in module.get('variants', []) if v.get('attributes', {}).get('org.gradle.usage') in ('java-api', 'java-runtime')]
+        # Sources/documentation variants also use java-runtime, but have no
+        # executable JVM target or dependencies. Check only library variants.
+        variants = [v for v in module.get('variants', [])
+                    if v.get('attributes', {}).get('org.gradle.category') == 'library'
+                    and v['attributes'].get('org.gradle.usage') in ('java-api', 'java-runtime')]
         if {v['attributes']['org.gradle.usage'] for v in variants} != {'java-api', 'java-runtime'}:
             raise ValueError('Missing JVM API/runtime variants')
         for variant in variants:
