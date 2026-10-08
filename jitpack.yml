@@ -1,0 +1,4 @@
+jdk:
+  - openjdk17
+install:
+  - python3 scripts/jitpack_build.py

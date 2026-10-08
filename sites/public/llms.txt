@@ -1,0 +1,13 @@
+# Apexfission Coordinates
+
+Kotlin/JVM pixel and normalized geometry. Choose an exact release or explicitly marked development documentation. The archive starts at confirmed 0.1.0; its manual is a reviewed postrelease correction, not an original release-time manual.
+
+- [English version catalog](en/)
+- [Catálogo en español](es/)
+- [Machine-readable scopes](versions.json)
+- [Agent entry point](agents/index.md)
+- [Installation](IMPORT.md)
+- [API contracts](agents/api.md)
+- [Recipes](agents/recipes.md)
+- [Limitations](agents/limitations.md)
+- [Repository](https://github.com/lambdawalker/android.apexfission.math.coordinates)

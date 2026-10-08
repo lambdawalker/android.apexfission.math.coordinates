@@ -1,0 +1,25 @@
+---
+import scopes from '../versions.json';
+import {catalogLinks} from '../../scripts/navigation.mjs';
+const base='/android.apexfission.math.coordinates';
+const path=Astro.url.pathname;
+const current=scopes.find(s=>path.startsWith(s.root));
+const es=current?.language==='es'||path.startsWith(base+'/es/');
+const legacy=[['','Overview'],['installation','Installation'],['getting-started','First transformation'],['concepts','Coordinate spaces'],['task-recipes','Recipes and runnable demos'],['reference','API reference'],['limitations','Limitations'],['troubleshooting','Troubleshooting'],['migration','Version scope'],['agents','Agent integration'],['development','Documentation maintenance'],['releases','Build and release']];
+const isCatalog=path===base+'/en/'||path===base+'/es/';
+const pages=current?current.pages.map(p=>({title:p.title,href:current.root+(p.slug?p.slug+'/':'')})):
+ isCatalog?catalogLinks(scopes,es?'es':'en'):legacy.map(([slug,title])=>({title,href:base+'/'+(slug?slug+'/':'')}));
+---
+<nav aria-label={es?'Guías de esta versión':'Guides for this version'}>
+ <a class="catalog" href={`${base}/${es?'es':'en'}/`}>{es?'← Versiones':'← Versions'}</a>
+ <ul>{pages.map(p=><li><a href={p.href} aria-current={path===p.href?'page':undefined}>{p.title}</a></li>)}</ul>
+</nav>
+<style>
+nav {font-size:.875rem;padding:.5rem 0}
+ul {list-style:none;padding:0;margin:1rem 0}
+li {margin:.1rem 0}
+a {display:block;padding:.4rem .75rem;color:var(--sl-color-gray-2);text-decoration:none;border-radius:.25rem}
+a:hover {color:var(--sl-color-white);background:var(--sl-color-gray-6)}
+a[aria-current="page"] {color:var(--sl-color-text-accent);background:var(--sl-color-accent-low);font-weight:600}
+.catalog {color:var(--sl-color-text-accent)}
+</style>
