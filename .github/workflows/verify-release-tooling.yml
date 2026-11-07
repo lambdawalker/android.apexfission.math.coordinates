@@ -40,7 +40,7 @@ jobs:
         env:
           RELEASE_REPOSITORY: jitpack
         run: |
-          ./gradlew publishAllPublicationsToVerificationRepository -PjitpackBuild=true -PreleaseVersion=9.8.7 --no-daemon
+          ./gradlew publishAllPublicationsToVerificationRepository -PjitpackBuild=true -PjitpackScopedTag=true -PreleaseVersion=9.8.7 --no-daemon
           python3 scripts/module_release.py check-local --module coordinates --version 9.8.7 --source "$(git rev-parse HEAD)"
       - uses: actions/setup-node@v6
         with:
