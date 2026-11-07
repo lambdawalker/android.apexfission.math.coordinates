@@ -9,6 +9,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.37.0"
 }
 
+val jitpackTagSuffix = if (providers.gradleProperty("jitpackScopedTag").orNull == "true") "-jitpack" else ""
 val jitpackBuild = providers.gradleProperty("jitpackBuild").orElse("false").map { it.toBoolean() }
 val releaseRepository = providers.environmentVariable("RELEASE_REPOSITORY").orElse("maven-central")
 require(releaseRepository.get() in listOf("maven-central", "jitpack")) { "Unknown publication destination" }
@@ -43,7 +44,7 @@ mavenPublishing {
     coordinates(
         if (jitpackBuild.get()) "com.github.lambdawalker" else publicationGroup,
         if (jitpackBuild.get()) "android.apexfission.math.coordinates" else publicationArtifact,
-        if (jitpackBuild.get()) "coordinates~v${releaseVersion.get()}" else releaseVersion.orElse("0.0.0-SNAPSHOT").get()
+        if (jitpackBuild.get()) "coordinates~v${releaseVersion.get()}$jitpackTagSuffix" else releaseVersion.orElse("0.0.0-SNAPSHOT").get()
     )
     configure(KotlinJvm(javadocJar = JavadocJar.Empty(), sourcesJar = SourcesJar.Sources()))
     if (!jitpackBuild.get()) publishToMavenCentral()
