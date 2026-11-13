@@ -6,3 +6,4 @@ build/
 local.properties
 __pycache__/
 *.pyc
+/.project/docs/cache/

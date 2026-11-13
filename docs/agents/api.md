@@ -1,5 +1,7 @@
 # Public API reference
 
+[Complete source declaration reference](source-reference.md) · Checked against the current library sources.
+
 Package root: `com.apexfission.android.math`. Signatures below describe main. Kotlin data classes also expose generated equality, copy, destructuring and string methods. Always read [input contracts](limitations.md) before using untrusted model output.
 
 ## Models

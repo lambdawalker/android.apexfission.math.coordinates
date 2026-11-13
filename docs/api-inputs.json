@@ -1,0 +1,74 @@
+[
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/models/ImageBox.kt",
+    "sha256": "e14c9db2626e5ac72df3b1bfa886451dcb378ea5345c30010fe4cccf7f806c06",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/models/ImagePoint.kt",
+    "sha256": "dc7319d533154c7ffb1cee725f849eacc16bc0f9fc88eab462a1775b45d7dacd",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/models/ImageSpace.kt",
+    "sha256": "82373b8e65d7eec88ecf891db3bd72b7d2bd5951596d6b70953f7bf6aff4280b",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/models/NormImageBox.kt",
+    "sha256": "27092978abe247b397ee3e52b0da68e2f49aee4f464f11c57765555b35dbbdc9",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/models/NormImagePoint.kt",
+    "sha256": "f1c91bda51d506ee8015ce39be0fe3d14a299292c6012e91bcaad428f92511c2",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/operations/normBox.kt",
+    "sha256": "2619b04701b4209a0c05207eb075f96f441737d7db5f97f11e9bc9728556ff67",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/operations/normPoint.kt",
+    "sha256": "935615044c883701a70a8574c278b61951531820de18e941887ed53272feee92",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/transformations/box.kt",
+    "sha256": "f56926e8e91dd8a2767b80947160c01693667243d18791d0ff9c582371d91430",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/transformations/normBox.kt",
+    "sha256": "4c0e9aa0b1d9c5397db3fce4a2a0cdf88e77486154288a0bd72888a9df365433",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/transformations/normPoint.kt",
+    "sha256": "f88bccbca9a50181b71ed3650b5efb59b44aeb166a77af7e17082d6e902cb885",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/transformations/point.kt",
+    "sha256": "588106d8419a475b931af7529fc005c9adb217104700945e333b7596f3f63705",
+    "visibility": "public"
+  },
+  {
+    "guide": "docs/agents/source-reference.md",
+    "path": "src/main/java/com/apexfission/android/math/transformations/src.kt",
+    "sha256": "56024ff88e1fb25a4f2335448846172808f7d4439b0ad94b3b17c38f18c51449",
+    "visibility": "public"
+  }
+]

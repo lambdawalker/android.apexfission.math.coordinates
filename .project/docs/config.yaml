@@ -1,0 +1,41 @@
+schema: 1
+repository: lambdawalker/android.apexfission.math.coordinates
+title: Apexfission Coordinates
+modules:
+  coordinates: Coordinates
+tooling_ref: v0.1.16
+sources:
+  roots:
+  - src/main/java
+  manifest: docs/api-inputs.json
+  groups:
+  - include:
+    - '**/*.kt'
+    intro: .project/docs/introductions/api.md
+    output: docs/agents/source-reference.md
+  examples:
+  - source: src/test/java/com/apexfission/android/math/examples/DocumentationExamplesTest.kt
+    target: docs/agents/quickstart.md
+    start: <!-- example:start -->
+    end: <!-- example:end -->
+    region_start: // docs:quickstart:start
+    region_end: // docs:quickstart:end
+    prefix: 'import com.apexfission.android.math.models.*
+
+      import com.apexfission.android.math.transformations.translate
+
+
+      '
+site:
+  build:
+  - npm
+  - --prefix
+  - sites
+  - run
+  - check
+  serve:
+  - npm
+  - --prefix
+  - sites
+  - run
+  - dev
