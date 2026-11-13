@@ -3,7 +3,7 @@ repository: lambdawalker/android.apexfission.math.coordinates
 title: Apexfission Coordinates
 modules:
   coordinates: Coordinates
-tooling_ref: v0.1.16
+tooling_ref: v0.1.20
 sources:
   roots:
   - src/main/java
