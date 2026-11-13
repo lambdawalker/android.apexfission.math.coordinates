@@ -1,0 +1,11 @@
+{
+  "documentation.yml": "f374b5ad1bcf8d7ffd6e93d7f17ef1546eeb9709959df5eb669d4c0163470049",
+  "finalize-release.yml": "83a9a4c46fe7768b254dfe682a5cd3c06dbcda6b5d0316e73262422094e98be4",
+  "publish-coordinates.yml": "5f151d25e719e2711c85c596f341f1be726a5b019789f696dae13d3bede27c54",
+  "publish-jitpack.yml": "00497419609815bd240ac67392e28bf5671930e0a2c173e5771150896d60dc37",
+  "publish-library.yml": "6b6e1d55266ab0938c4ada32f9ee3f1198ceba3507158dd12b6143dbef58e320",
+  "reconcile-failed-jitpack-coordinates.yml": "7dab53b28421f3a9a582382efa16405cf9edd0c2795d0a1469af56bac0a86360",
+  "unit-tests.yml": "dd9dcf3d76e519c186c3fa33f1d30d1a3b64c970aa248cac2f94f3d705e01840",
+  "update-workflows.yml": "1cc5b1f90efcaeb31161d3a6c4b3cfb32b3b06804aaca3a4c8fcf57bc90bbb9b",
+  "verify-release-tooling-coordinates.yml": "92db9d8ef956fb54512af7b90f1192ac1a93ebcbf1d9b7bde284db420f4121d7"
+}

@@ -1,0 +1,24 @@
+name: Verify project tooling
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Load pinned setup tool
+        run: sh ./setup.sh --version
+      - name: Verify generated tooling and isolated JVM publication contracts
+        run: node --test tests/*.test.mjs

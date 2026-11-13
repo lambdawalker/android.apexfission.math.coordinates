@@ -1,0 +1,33 @@
+repository: lambdawalker/android.apexfission.math.coordinates
+title: Coordinates
+tooling_ref: fe34dbd5b996d492c49786d08d3d7f2d1e73c5ab
+bootstrap:
+  jitpack: true
+modules:
+  coordinates: Coordinates
+android_modules:
+  coordinates:
+    path: ':'
+    directory: '.'
+    kind: jvm-library
+    selected: true
+workflows:
+  module: coordinates
+  title: Coordinates
+  java_version: '17'
+  documentation_command: >-
+    export JAVA_HOME="${JAVA_HOME_17_X64:?JDK 17 is required for executable documentation}";
+    export PATH="$JAVA_HOME/bin:$PATH";
+    ./gradlew test runExamples verifyImportDocs --no-daemon &&
+    sh ./docs.sh build --check && node --test sites/tests/*.test.mjs
+  release_validation_command: sh ./setup.sh --version && sh ./docs.sh imports --check && ./gradlew runExamples verifyImportDocs --no-daemon && sh ./docs.sh build --check && node --test sites/tests/*.test.mjs tests/*.test.mjs
+module_verification:
+  coordinates:
+    packaging: jar
+    class_prefix: com/apexfission/android/math/
+    bytecode_major: 55
+    jvm_version: 11
+    required_api_artifacts: []
+    require_kotlin_stdlib: true
+    forbidden_dependency_group_prefixes:
+      - androidx.compose
