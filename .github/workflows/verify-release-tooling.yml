@@ -47,9 +47,8 @@ jobs:
           node-version: '24'
       - uses: dtolnay/rust-toolchain@stable
       - name: Install pinned documentation tool
-        run: cargo install --locked --git https://github.com/lambdawalker/gradle.android-repo-setup.git --tag v0.1.20 android-repo-docs
+        run: cargo install --locked --git https://github.com/lambdawalker/gradle.android-repo-setup.git --rev 1da53392b262c7c3129d2bd645dfd7b34ead81e1 android-repo-docs
       - name: Check the documentation site
-        working-directory: sites
         run: |
-          npm ci
-          npm run check
+          android-repo-docs build --check
+          node --test sites/tests/*.test.mjs

@@ -29,7 +29,7 @@ jobs:
           ref: ${{ github.event_name != 'pull_request' && 'main' || github.sha }}
       - uses: dtolnay/rust-toolchain@stable
       - name: Install pinned documentation tool
-        run: cargo install --locked --git https://github.com/lambdawalker/gradle.android-repo-setup.git --tag v0.1.20 android-repo-docs
+        run: cargo install --locked --git https://github.com/lambdawalker/gradle.android-repo-setup.git --rev 1da53392b262c7c3129d2bd645dfd7b34ead81e1 android-repo-docs
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
@@ -44,15 +44,11 @@ jobs:
         run: ./gradlew test runExamples verifyImportDocs --no-daemon
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: sites/package-lock.json
+          node-version: '24'
       - name: Build and validate both documentation audiences
-        working-directory: sites
         run: |
-          npm ci
-          cd ..
           android-repo-docs build --check
+          node --test sites/tests/*.test.mjs
       - name: Reject stale deployment source
         if: github.event_name != 'pull_request'
         run: |
