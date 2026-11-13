@@ -58,3 +58,20 @@ This extraction origin is historical context; consult the host repository for it
 - [Documentation maintenance and coverage](docs/documentation.md).
 
 The site provides English and Spanish guides with a version selector for development and confirmed releases. IMPORT.md lists the destinations holding the latest confirmed version; archived installation pages retain the instructions for their selected version. Release 0.1.0 keeps its original code identity and uses the subsequently added guides, reviewed against that unchanged library source. See the [documentation maintenance guide](docs/documentation.md) for translation freshness and provenance.
+
+
+## Documentation tooling
+
+Documentation is maintained by the independently pinned `android-repo-docs` executable.
+Use `sh ./docs.sh check` on Linux/macOS or `docs.bat check` on Windows.
+The launcher installs the configured release or immutable source revision on first use;
+source pins require Rust and Git. No setup credentials are needed.
+
+- `sh ./docs.sh sources check` verifies reviewed Kotlin inputs and examples.
+- `sh ./docs.sh sources update` intentionally refreshes generated references and examples; review the diff.
+- `sh ./docs.sh build --check` builds the existing documentation site locally.
+- `sh ./docs.sh bootstrap check` verifies the launcher files against their independent pin.
+
+Configuration and project-specific introductory Markdown live in `.project/docs/`.
+Confirmed release records and archived source identities remain authoritative.
+Documentation checks do not accept images, publish artifacts, or deploy the site.

@@ -5,7 +5,6 @@ Follow [the confirmed installation instructions](../../IMPORT.md). These example
 The following code is extracted from the executable documentation test. A 1920 × 1080 image is center-cropped to 1080 × 1080; the crop begins at x = 420. A box in the source frame moves 420 pixels left in the crop frame.
 
 <!-- example:start -->
-
 ```kotlin
 import com.apexfission.android.math.models.*
 import com.apexfission.android.math.transformations.translate
@@ -18,7 +17,6 @@ fun viewportExample(): ImageBox {
     // ImageBox(x=80, y=100, x2=580, y2=600, width=500, height=500)
 }
 ```
-
 <!-- example:end -->
 
 Run `./gradlew test runExamples` at the repository root. The runner asserts expected results for crop translation, normalized detector output, rounding, and the normalized-point child helper. [Full demo source](../../src/test/java/com/apexfission/android/math/examples/DocumentationExamplesTest.kt) includes all imports and assertions.

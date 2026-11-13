@@ -15,7 +15,7 @@ python3 -m pip install -r scripts/requirements-publishing.txt
 python3 -m unittest discover -s scripts/tests -v
 python3 scripts/publishing_config.py check
 python3 scripts/module_release.py verify
-python3 scripts/documentation_history.py verify
+sh ./docs.sh history verify
 ./gradlew test runExamples verifyImportDocs build publishAllPublicationsToVerificationRepository -PreleaseVersion=9.8.7
 python3 scripts/module_release.py check-local --module coordinates --version 9.8.7 --source "$(git rev-parse HEAD)"
 RELEASE_REPOSITORY=jitpack ./gradlew publishAllPublicationsToVerificationRepository -PjitpackBuild=true -PreleaseVersion=9.8.7
