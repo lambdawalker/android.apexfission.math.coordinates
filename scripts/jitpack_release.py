@@ -5,7 +5,7 @@ import re
 import urllib.error
 import xml.etree.ElementTree as ET
 
-import release
+import jvm_release as release
 
 GROUP = 'com.github.lambdawalker'
 ARTIFACT = 'android.apexfission.math.coordinates'

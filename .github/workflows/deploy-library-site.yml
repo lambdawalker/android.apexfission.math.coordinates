@@ -29,12 +29,7 @@ jobs:
           ref: ${{ github.event_name != 'pull_request' && 'main' || github.sha }}
       - uses: dtolnay/rust-toolchain@stable
       - name: Install pinned documentation tool
-        run: cargo install --locked --git https://github.com/lambdawalker/gradle.android-repo-setup.git --rev 1da53392b262c7c3129d2bd645dfd7b34ead81e1 android-repo-docs
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-      - name: Install publication tooling dependencies
-        run: python -m pip install -r scripts/requirements-publishing.txt
+        run: sh ./docs.sh --version
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -47,7 +42,7 @@ jobs:
           node-version: '24'
       - name: Build and validate both documentation audiences
         run: |
-          android-repo-docs build --check
+          sh ./docs.sh build --check
           node --test sites/tests/*.test.mjs
       - name: Reject stale deployment source
         if: github.event_name != 'pull_request'

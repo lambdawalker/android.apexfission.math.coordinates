@@ -117,7 +117,9 @@ listOf("generateImportDocs" to "generate", "verifyImportDocs" to "verify").forEa
         group = "documentation"
         description = "${command.replaceFirstChar { it.uppercase() }} installation documentation from confirmed release metadata"
         workingDir(projectDir)
-        commandLine("python3", "scripts/module_release.py", command)
+        val launcher = if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true))
+            listOf("cmd.exe", "/d", "/c", "docs.bat") else listOf("sh", "./docs.sh")
+        commandLine(launcher + listOf("imports") + if (command == "verify") listOf("--check") else emptyList())
     }
 }
 

@@ -1,7 +1,5 @@
 """Shared source identities and journaled Coordinates releases. Never uploads packages."""
 import argparse
-import base64
-import urllib.parse
 import urllib.request
 import hashlib
 import io
@@ -14,16 +12,28 @@ import subprocess
 import time
 import urllib.error
 import xml.etree.ElementTree as ET
-import release as common
+import jvm_release as common
 import release_identity
-import import_docs
-import documentation_history
 import jitpack_release
 from publishing_config import load_config, validate_url, ID
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULES = {'coordinates': 'coordinates'}
 ARTIFACTS = {'coordinates': ('coordinates',)}
+HISTORY = Path('docs/releases/history')
+
+
+def run_docs(root, *args):
+    """Use the repository's pinned shared CLI, including in isolated fixtures."""
+    launcher = root / ('docs.bat' if os.name == 'nt' else 'docs.sh')
+    command = ['cmd.exe', '/d', '/c', str(launcher)] if os.name == 'nt' else ['sh', str(launcher)]
+    return subprocess.check_output([*command, *args], cwd=root, text=True)
+
+
+def latest_records(root):
+    folder = root / 'docs/releases'
+    paths = list(folder.glob('*.json')) + [p for p in folder.glob('*/*.json') if p.parent.name != 'history']
+    return [record for path in sorted(paths) if (record := json.loads(path.read_text())) is not None]
 
 def git(*args): return subprocess.check_output(['git', *args], cwd=ROOT, text=True).strip()
 def repository():
@@ -187,7 +197,7 @@ def all_records(remote=False):
     if remote:
         paths=git('ls-tree','-r','--name-only','origin/main','--','docs/releases').splitlines()
         return [json.loads(git('show',f'origin/main:{p}')) for p in paths if p.endswith('.json') and not p.startswith('docs/releases/history/')]
-    return list(documentation_history.latest_records(ROOT))
+    return latest_records(ROOT)
 
 def prepare(module, requested='', *, allow_pending_jitpack=False):
     refresh(); tags=remote_tags()
@@ -236,11 +246,20 @@ def prepare_finalization(module,version,source=''):
     if current['version'] != version:
         record = None
         for filename in (f'{version}-{repository()}.json', f'{version}.json'):
-            path = documentation_history.HISTORY / module / filename
+            path = HISTORY / module / filename
             if git('ls-tree', '--name-only', 'origin/main', '--', str(path)):
-                entry = documentation_history.validate(json.loads(git('show', f'origin/main:{path}')))
+                # Validate with the shared tool, then require the exact same
+                # record from origin/main. Never validate one revision and use
+                # unchecked archive bytes from a concurrently advanced branch.
+                catalog = json.loads(run_docs(ROOT, 'history', 'export'))
+                entry = json.loads(git('show', f'origin/main:{path}'))
+                validated = [item for item in catalog if item['module'] == module and item['route_version'] == Path(filename).stem]
+                if len(validated) != 1 or entry != {key: value for key, value in validated[0].items() if key not in ('route_version', 'installation')}:
+                    raise ValueError('Archive changed; check out current main before finalization')
                 record = entry['destinations'].get(repository())
                 if record:
+                    if any(record[key] != entry[key] for key in ('module', 'version', 'source')):
+                        raise ValueError('Archive identity conflict')
                     break
         if not record or record['version'] != version:
             raise ValueError('No confirmed record for this destination and version')
@@ -353,18 +372,7 @@ def confirmed_record(module,remote=False):
     return json.loads(local.read_text()) if local.exists() else None
 
 def documentation(verify=False):
-    # Preserve historical records even when a destination is later removed from the registry.
-    targets=['maven-central']+sorted({p.parent.name for p in (ROOT/'docs/releases').glob('*/*.json')})
-    records={(target,module):json.loads(path.read_text()) for target in targets for module in MODULES
-             if (path:=ROOT/'docs/releases'/('' if target=='maven-central' else target)/f'{module}.json').exists()}
-    sections=import_docs.render(records,{module:identity(module) for module in MODULES})
-    template=(ROOT/'docs/templates/IMPORT.md.template').read_text()
-    expected=template.replace('{{INSTALLATION}}',sections)
-    if '{{' in expected:raise ValueError('Unknown template placeholder')
-    path=ROOT/'IMPORT.md'
-    if verify:
-        if path.read_text()!=expected:raise ValueError('IMPORT.md drift; run ./gradlew generateImportDocs')
-    else:path.write_text(expected)
+    return run_docs(ROOT, 'imports', *(['--check'] if verify else []))
 
 def finalize(module,version,source):
     common.version_key(version)
@@ -378,16 +386,17 @@ def finalize(module,version,source):
     refresh();git('merge-base','--is-ancestor',source,'origin/main')
     # Artifact inputs may advance while a verified older release propagates.
     # Only changes to the executing protocol/renderer require reconciliation.
-    git('diff','--exit-code','HEAD','origin/main','--','scripts',':(exclude)scripts/tests','publishing','docs/templates/IMPORT.md.template')
+    git('diff','--exit-code','HEAD','origin/main','--','scripts',':(exclude)scripts/tests','publishing','docs/templates/IMPORT.md.template','.project/docs/config.yaml','docs.sh','docs.bat','.project/docs/bootstrap.ps1')
     git('switch','-C',f'finalize-{module}','origin/main')
     current=confirmed_record(module)
     if current and common.version_key(current['version'])>=common.version_key(version):raise ValueError('Refusing to replace same/newer module metadata')
-    documentation_history.seed(ROOT)
-    documentation_history.archive_record(ROOT,r)
+    run_docs(ROOT, 'history', 'seed')
     (ROOT/metadata_path(module)).parent.mkdir(parents=True,exist_ok=True)
-    (ROOT/metadata_path(module)).write_text(json.dumps(r,indent=2,sort_keys=True)+'\n');documentation()
+    (ROOT/metadata_path(module)).write_text(json.dumps(r,indent=2,sort_keys=True)+'\n')
+    run_docs(ROOT, 'history', 'seed')
+    documentation()
     git('config','user.name','github-actions[bot]');git('config','user.email','41898282+github-actions[bot]@users.noreply.github.com')
-    git('add',metadata_path(module),'IMPORT.md',str(documentation_history.HISTORY));git('commit','-m',f'docs: confirm {module} {version}')
+    git('add',metadata_path(module),'IMPORT.md',str(HISTORY));git('commit','-m',f'docs: confirm {module} {version}')
     stable = record_source_tag(journal)
     updates=['HEAD:refs/heads/main',f':refs/tags/{journal_ref(module,version)}']
     if remote_ref(stable):

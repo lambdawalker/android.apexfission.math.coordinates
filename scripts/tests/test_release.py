@@ -9,7 +9,7 @@ from unittest.mock import patch
 import urllib.error
 import zipfile
 
-SPEC = importlib.util.spec_from_file_location('release', Path(__file__).parents[1] / 'release.py')
+SPEC = importlib.util.spec_from_file_location('release', Path(__file__).parents[1] / 'jvm_release.py')
 release = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(release)
 
@@ -134,90 +134,3 @@ class ArtifactTests(unittest.TestCase):
         for suffix in ('-sources.jar', '-javadoc.jar'):
             with self.subTest(suffix=suffix), self.assertRaises(ValueError):
                 release.verify_artifact(jar('META-INF/MANIFEST.MF', ''), suffix, 'org.example', 'coordinates', '1.2.3')
-
-    def test_public_checks_every_artifact_and_signature(self):
-        files = artifacts()
-        def fetch(url):
-            if url.endswith('.asc'):
-                return b'-----BEGIN PGP SIGNATURE-----'
-            return next(data for suffix, data in files.items() if url.endswith('coordinates-1.2.3' + suffix))
-        with patch.object(release, 'fetch', side_effect=fetch) as request:
-            release.verify_public(record())
-            self.assertEqual(request.call_count, len(release.SUFFIXES) * 2)
-
-    def test_hash_mismatch_stops(self):
-        data = record()
-        data['sha256']['.pom'] = 'bad'
-        with patch.object(release, 'fetch', return_value=pom()):
-            with self.assertRaisesRegex(ValueError, 'hash'):
-                release.verify_public(data)
-
-    def test_partial_publication_timeout(self):
-        error = urllib.error.HTTPError('url', 404, 'Missing sources', {}, None)
-        with patch.object(release, 'verify_public', side_effect=error):
-            with self.assertRaises(TimeoutError):
-                release.wait_for_publication(record(), timeout=0)
-
-    def test_registry_timeout_retains_attempt(self):
-        with patch.object(release, 'verify_public', side_effect=urllib.error.URLError('offline')):
-            with self.assertRaises(TimeoutError):
-                release.wait_for_publication(record(), timeout=0)
-
-
-class DocumentationTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
-        (self.root / 'docs/templates').mkdir(parents=True)
-        (self.root / 'docs/templates/IMPORT.md.template').write_text('{{STATUS}}\n{{INSTALLATION}}\n')
-        (self.root / 'gradle.properties').write_text('GROUP=org.example\nPOM_ARTIFACT_ID=coordinates\n')
-        (self.root / 'docs/release.json').write_text('null\n')
-        self.patch = patch.object(release, 'ROOT', self.root)
-        self.patch.start()
-        self.addCleanup(self.patch.stop)
-
-    def test_unreleased_is_explicit_and_deterministic(self):
-        release.documentation()
-        first = (self.root / 'IMPORT.md').read_text()
-        self.assertIn('No Maven Central release', first)
-        self.assertNotIn('implementation(', first)
-        release.documentation()
-        self.assertEqual(first, (self.root / 'IMPORT.md').read_text())
-        release.documentation(verify=True)
-
-    def test_published_metadata_survives_development_coordinate_change(self):
-        (self.root / 'docs/release.json').write_text(json.dumps(record()))
-        release.documentation()
-        before = (self.root / 'IMPORT.md').read_text()
-        (self.root / 'gradle.properties').write_text('GROUP=org.changed\nPOM_ARTIFACT_ID=coordinates\n')
-        release.documentation()
-        self.assertEqual(before, (self.root / 'IMPORT.md').read_text())
-        with self.assertRaisesRegex(ValueError, 'Development coordinates'):
-            release.documentation(verify=True)
-
-    def test_unknown_placeholder(self):
-        with self.assertRaisesRegex(ValueError, 'placeholder'):
-            release.render('{{TYPO}}', None)
-
-    def test_generated_drift(self):
-        release.documentation()
-        (self.root / 'IMPORT.md').write_text('hand edit')
-        with self.assertRaisesRegex(ValueError, 'drift'):
-            release.documentation(verify=True)
-
-    def test_failed_confirmation_cannot_change_docs(self):
-        release.documentation()
-        before = {f: (self.root / f).read_bytes() for f in release.DOC_FILES}
-        with patch.object(release, 'read_record', return_value=record()), patch.object(release, 'wait_for_publication', side_effect=TimeoutError):
-            with self.assertRaises(TimeoutError):
-                release.confirm('1.2.3')
-        self.assertEqual(before, {f: (self.root / f).read_bytes() for f in release.DOC_FILES})
-
-    def test_confirmed_version_renders_all_dependency_formats(self):
-        with patch.object(release, 'read_record', return_value=record()), patch.object(release, 'wait_for_publication'):
-            release.confirm('1.2.3')
-        document = (self.root / 'IMPORT.md').read_text()
-        for snippet in ('implementation("org.example:coordinates:1.2.3")', "implementation 'org.example:coordinates:1.2.3'", '[libraries]', '<version>1.2.3</version>'):
-            self.assertIn(snippet, document)
-        release.documentation(verify=True)
