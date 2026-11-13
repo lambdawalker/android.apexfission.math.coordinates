@@ -125,13 +125,12 @@ jobs:
         if: steps.release.outputs.skip != 'true'
       - name: Install pinned documentation tool
         if: steps.release.outputs.skip != 'true'
-        run: cargo install --locked --git https://github.com/lambdawalker/gradle.android-repo-setup.git --tag v0.1.20 android-repo-docs
+        run: sh ./docs.sh --version
       - name: Validate documentation at immutable release source
         if: steps.release.outputs.skip != 'true'
-        working-directory: sites
         run: |
-          npm ci
-          npm run check
+          sh ./docs.sh build --check
+          node --test sites/tests/*.test.mjs
       - name: Test and validate complete unsigned publication locally
         if: steps.release.outputs.skip != 'true'
         env:
@@ -140,7 +139,6 @@ jobs:
           SOURCE_SHA: ${{ steps.release.outputs.source }}
         run: |
           env -u RELEASE_REPOSITORY -u MAVEN_REPOSITORY_URL -u MAVEN_REPOSITORY_USERNAME -u MAVEN_REPOSITORY_PASSWORD python3 -m unittest discover -s scripts/tests -v
-          bash -n scripts/finalize-release.sh
           ./gradlew verifyImportDocs test runExamples build publishAllPublicationsToVerificationRepository "-PreleaseVersion=$RELEASE_VERSION" --no-daemon
           python3 scripts/module_release.py check-local --module "$RELEASE_MODULE" --version "$RELEASE_VERSION" --source "$SOURCE_SHA"
       - name: Reserve immutable version, source, and artifact hashes

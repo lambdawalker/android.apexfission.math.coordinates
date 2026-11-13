@@ -90,6 +90,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 -m pip install -r scripts/requirements-publishing.txt
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install pinned documentation tool
+        run: sh ./docs.sh --version
       - name: Recheck remote release state after acquiring the lock
         id: release
         env:

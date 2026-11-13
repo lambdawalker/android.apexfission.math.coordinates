@@ -7,3 +7,5 @@ local.properties
 __pycache__/
 *.pyc
 /.project/docs/cache/
+/sites/.astro-app-*/
+/sites/.astro-build-*/

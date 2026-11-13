@@ -12,8 +12,7 @@ import zipfile
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import module_release as m
 import release_identity as identity
-import import_docs
-import documentation_history as history
+from docs_fixture import install, render, archive_record
 import jitpack_build as build
 import jitpack_release as jp
 
@@ -32,17 +31,17 @@ def zipped(entries):
 class ReleaseTests(unittest.TestCase):
     def test_latest_numeric_and_destination_catchup(self):
         a=record('0.2.9');b=record('0.2.10',target='jitpack')
-        rendered=import_docs.render({('maven-central','coordinates'):a,('jitpack','coordinates'):b},{'coordinates':('com.apexfission.android.math','coordinates')})
+        rendered=render([a,b])
         self.assertNotIn('### maven-central',rendered);self.assertIn('coordinates~v0.2.10',rendered)
-        a=record('0.2.10');self.assertIn('### maven-central',import_docs.render({('maven-central','coordinates'):a,('jitpack','coordinates'):b},{'coordinates':('com.apexfission.android.math','coordinates')}))
+        a=record('0.2.10');self.assertIn('### maven-central',render([a,b]))
         b['source']='c'*40
-        with self.assertRaisesRegex(ValueError,'Conflicting'):import_docs.render({('maven-central','coordinates'):a,('jitpack','coordinates'):b},{'coordinates':('com.apexfission.android.math','coordinates')})
+        with self.assertRaises(subprocess.CalledProcessError):render([a,b])
     def test_archive_retains_docs_identity_and_rejects_conflict(self):
         with tempfile.TemporaryDirectory() as d:
-            root=Path(d);path=history.archive_record(root,record());entry=json.loads((root/path).read_text());entry['documentation_ref']='d'*40;(root/path).write_text(json.dumps(entry))
-            history.archive_record(root,record(target='jitpack'))
-            entry=history.load_catalog(root)[0];self.assertEqual(entry['documentation_ref'],'d'*40);self.assertEqual(len(entry['destinations']),2)
-            with self.assertRaisesRegex(ValueError,'source conflict'):history.archive_record(root,record(source='c'*40))
+            root=Path(d);path=archive_record(root,record());entry=json.loads((root/path).read_text());entry['documentation_ref']='d'*40;(root/path).write_text(json.dumps(entry))
+            archive_record(root,record(target='jitpack'))
+            entry=json.loads(m.run_docs(root, 'history', 'export'))[0];self.assertEqual(entry['documentation_ref'],'d'*40);self.assertEqual(len(entry['destinations']),2)
+            with self.assertRaises(subprocess.CalledProcessError):archive_record(root,record(source='c'*40))
     def test_pending_destination_blocks_reupload_but_other_destination_allowed(self):
         tags=['release-pending/coordinates/0.2.2']
         with self.assertRaisesRegex(ValueError,'Unresolved'):m.ensure_available('coordinates',tags)
@@ -82,7 +81,7 @@ class ReleaseTests(unittest.TestCase):
             with self.assertRaises(TimeoutError):m.confirm('coordinates','0.2.2',timeout=0)
     def test_registry_and_generated_docs(self):
         from publishing_config import generate
-        generate(check=True);m.documentation(verify=True);history.verify(m.ROOT)
+        generate(check=True);m.documentation(verify=True);m.run_docs(m.ROOT, 'history', 'verify')
 
 class GitTests(unittest.TestCase):
     def setUp(self):
@@ -135,6 +134,7 @@ class FinalizationTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.base=Path(self.temp.name);self.remote=self.base/'remote.git';self.root=self.base/'repo'
         self.call(self.base,'init','--bare','--initial-branch=main',str(self.remote));self.call(self.base,'clone',str(self.remote),str(self.root));self.git('config','user.email','test@example.com');self.git('config','user.name','test')
+        install(self.root)
         for path in ('docs/templates/IMPORT.md.template','gradle.properties'):
             destination=self.root/path;destination.parent.mkdir(parents=True,exist_ok=True);destination.write_bytes((m.ROOT/path).read_bytes())
         (self.root/'IMPORT.md').write_text('previous installation');self.git('add','.');self.git('commit','-qm','release source');self.source=self.git('rev-parse','HEAD');self.git('push','origin','main')
@@ -147,6 +147,43 @@ class FinalizationTests(unittest.TestCase):
         self.reserve_fixture();m.guard('coordinates','0.2.2')
         with self.assertRaisesRegex(ValueError,'already started'):m.guard('coordinates','0.2.2')
         self.assertTrue(m.remote_ref(m.uploading('coordinates','0.2.2')))
+
+    def test_pending_blocks_allocation_before_registry_lookup(self):
+        self.reserve_fixture()
+        with patch.object(m, 'published_versions', side_effect=AssertionError('Must not allocate')):
+            with self.assertRaisesRegex(ValueError, 'Unresolved'):
+                m.prepare('coordinates')
+
+    def test_journal_metadata_cannot_claim_a_different_source(self):
+        r = record(source='a' * 40)
+        r['phase'] = 'reserved-before-upload'
+        self.git('tag', '-a', m.pending('coordinates', '0.2.2'), self.source, '-m', json.dumps(r))
+        self.git('push', 'origin', '--tags')
+        with self.assertRaisesRegex(ValueError, 'source/version mismatch'):
+            m.read_record('coordinates', '0.2.2')
+
+    def test_mixed_legacy_and_scoped_journals_require_reconciliation(self):
+        r = self.reserve_fixture()
+        self.git('tag', '-a', 'release-pending/0.2.2', self.source, '-m', json.dumps(r))
+        self.git('push', 'origin', '--tags')
+        with self.assertRaisesRegex(ValueError, 'Mixed legacy'):
+            m.prepare_finalization('coordinates', '0.2.2')
+
+    def test_concurrent_documentation_tool_change_stops_finalization(self):
+        r = self.reserve_fixture()
+        r['phase'] = 'confirmed-public'
+        (self.root / 'build').mkdir()
+        (self.root / 'build/confirmed-coordinates.json').write_text(json.dumps(r))
+        config = self.root / '.project/docs/config.yaml'
+        config.write_text(config.read_text() + '# concurrent tool change\n')
+        self.git('add', '.project/docs/config.yaml')
+        self.git('commit', '-qm', 'change documentation protocol')
+        self.git('push', 'origin', 'main')
+        self.git('checkout', '--detach', self.source)
+        with self.assertRaises(subprocess.CalledProcessError):
+            m.finalize('coordinates', '0.2.2', self.source)
+        self.assertTrue(m.remote_ref(m.pending('coordinates', '0.2.2')))
+        self.assertEqual(self.call(self.remote, 'show', 'main:IMPORT.md'), 'previous installation')
     def test_finalization_preserves_advanced_main_and_retry_noops(self):
         r=self.reserve_fixture();r['phase']='confirmed-public';(self.root/'build').mkdir();(self.root/'build/confirmed-coordinates.json').write_text(json.dumps(r))
         (self.root/'unrelated.md').write_text('concurrent change');self.git('add','unrelated.md');self.git('commit','-qm','concurrent update');self.git('push','origin','main');self.git('checkout','--detach',self.source)
@@ -184,7 +221,7 @@ class FinalizationTests(unittest.TestCase):
         # A later destination pointer must not erase the legacy completed identity.
         later=record('0.2.3',source=self.source)
         (self.root/'docs/releases/coordinates.json').write_text(json.dumps(later))
-        history.archive_record(self.root,later)
+        archive_record(self.root,later)
         self.git('add','.');self.git('commit','-qm','newer confirmed pointer')
         self.git('tag','coordinates/v0.2.3',self.source);self.git('push','origin','HEAD:main','refs/tags/coordinates/v0.2.3')
         self.assertEqual(m.prepare_finalization('coordinates','0.2.2')['skip'],'true')
@@ -233,4 +270,57 @@ class NegativeValidationTests(unittest.TestCase):
         for value in ('http://example.org','https://user:password@example.org','https://example.org/\"code','https://example.org/?secret=yes'):
             with self.assertRaises(ValueError):config.validate_url(value)
 
-if __name__=='__main__':unittest.main()
+
+class CentralPublicationTests(unittest.TestCase):
+    def public_record(self):
+        from test_release import artifacts
+        files = artifacts()
+        r = record('1.2.3')
+        r['group'] = 'org.example'
+        r['sha256'] = {suffix: hashlib.sha256(data).hexdigest() for suffix, data in files.items()}
+        return r, files
+
+    def test_every_public_artifact_and_signature_is_checked(self):
+        r, files = self.public_record()
+        def fetch(url):
+            if url.endswith('.asc'):
+                return b'-----BEGIN PGP SIGNATURE-----'
+            return next(data for suffix, data in files.items() if url.endswith('coordinates-1.2.3' + suffix))
+        with patch.object(m, 'fetch', side_effect=fetch) as request:
+            m.verify_public(r)
+        self.assertEqual(request.call_count, len(m.common.SUFFIXES) * 2)
+
+    def test_hash_mismatch_stops_confirmation(self):
+        r, files = self.public_record()
+        r['sha256']['.pom'] = 'b' * 64
+        with patch.object(m, 'fetch', return_value=files['.pom']):
+            with self.assertRaisesRegex(ValueError, 'hash mismatch'):
+                m.verify_public(r)
+
+    def test_missing_signature_stops_confirmation(self):
+        r, files = self.public_record()
+        with patch.object(m, 'fetch', side_effect=[files['.pom'], b'not a signature']):
+            with self.assertRaisesRegex(ValueError, 'Missing signature'):
+                m.verify_public(r)
+
+    def test_partial_publication_does_not_advance_installation_or_history(self):
+        r, files = self.public_record()
+        r['phase'] = 'reserved-before-upload'
+        error = urllib.error.HTTPError('url', 404, 'Missing sources', {}, None)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'IMPORT.md').write_text('last confirmed installation')
+            (root / 'docs/releases').mkdir(parents=True)
+            pointer = root / 'docs/releases/coordinates.json'
+            pointer.write_text('null\n')
+            with patch.object(m, 'ROOT', root), patch.object(m, 'read_record', return_value=r), \
+                 patch.object(m, 'git', return_value=r['source']), patch.object(m, 'verify_public', side_effect=error):
+                with self.assertRaises(TimeoutError):
+                    m.confirm('coordinates', '1.2.3', timeout=0)
+            self.assertEqual((root / 'IMPORT.md').read_text(), 'last confirmed installation')
+            self.assertEqual(pointer.read_text(), 'null\n')
+            self.assertFalse((root / 'build/confirmed-coordinates.json').exists())
+            self.assertFalse((root / 'docs/releases/history').exists())
+
+if __name__ == '__main__':
+    unittest.main()

@@ -12,6 +12,7 @@ The Actions identity must be permitted to create immutable tags, delete complete
 
 ```bash
 python3 -m pip install -r scripts/requirements-publishing.txt
+sh ./docs.sh --version
 python3 -m unittest discover -s scripts/tests -v
 python3 scripts/publishing_config.py check
 python3 scripts/module_release.py verify
@@ -20,7 +21,8 @@ sh ./docs.sh history verify
 python3 scripts/module_release.py check-local --module coordinates --version 9.8.7 --source "$(git rev-parse HEAD)"
 RELEASE_REPOSITORY=jitpack ./gradlew publishAllPublicationsToVerificationRepository -PjitpackBuild=true -PreleaseVersion=9.8.7
 RELEASE_REPOSITORY=jitpack python3 scripts/module_release.py check-local --module coordinates --version 9.8.7 --source "$(git rev-parse HEAD)"
-(cd sites && npm ci && npm run check)
+sh ./docs.sh build --check
+node --test sites/tests/*.test.mjs
 ```
 
 Use a clean tracked checkout for `check-local`. These tasks write a local build repository only; `9.8.7` is test data. The verifier checks JAR class headers and JVM 11 target, Kotlin sources, text documentation, POM metadata/dependencies, and both Gradle API/runtime variants, JVM target and dependencies. New documentation JARs contain only `docs/agents/**/*.md` and LICENSE, excluding mutable installation records, translated site pages and media. Historical artifact verification preserves the original byte hashes.
@@ -64,7 +66,7 @@ git show release-pending/coordinates/X.Y.Z
 | Provider definitively rejected and no artifact can become public | A maintainer may delete only that investigated pending/uploading pair. Preserve canonical source tags. |
 | Branch protection rejects docs | Keep journals; confirm, review generated IMPORT, latest record and archive in a PR, then have an authorized maintainer reconcile exact tags atomically. Never upload again. |
 
-Original `release-pending/X.Y.Z` and `release-uploading/X.Y.Z` markers block every new allocation. **Finalize coordinates release** on Central can read the original annotated journal, verify its exact bytes, normalize its identity without overwriting hashes, create/preserve its original `vX.Y.Z` source tag, archive it and atomically remove the legacy markers. Mixed legacy/scoped journals require investigation. An orphan upload marker is not proof of failure and must not be deleted automatically. The original `release.py` and shell recovery helper remain for regression coverage/historical recovery; new workflows exclusively use `module_release.py`.
+Original `release-pending/X.Y.Z` and `release-uploading/X.Y.Z` markers block every new allocation. **Finalize coordinates release** on Central can read the original annotated journal, verify its exact bytes, normalize its identity without overwriting hashes, create/preserve its original `vX.Y.Z` source tag, archive it and atomically remove the legacy markers. Mixed legacy/scoped journals require investigation. An orphan upload marker is not proof of failure and must not be deleted automatically. The current `module_release.py` handles this historical recovery; the obsolete `release.py` command and shell recovery helper have been removed. Installation rendering and history validation use the pinned documentation CLI. JVM artifact checks remain in `scripts/jvm_release.py` until the setup CLI supports JAR publications.
 
 `docs/release.json` remains the immutable legacy evidence for the confirmed 0.1.0 publication at `4af3c2e6e2c3bddc66552e0bcf5b3d65e9cb8415`, tagged `v0.1.0`. It is not the latest-release pointer. That proven record was migrated without republishing or inventing a source. Its archive's documentation_ref is the reviewed postrelease manual at `427c899c946199044a039737cc05ef19cef5c46b`: source under `src/main` and the dependency catalog match the release, while focused manuals were introduced later. The retained translation tree records reviewed Spanish guides separately; it does not claim Spanish pages shipped in the original JAR.
 

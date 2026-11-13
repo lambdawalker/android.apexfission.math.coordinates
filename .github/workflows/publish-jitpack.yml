@@ -83,13 +83,12 @@ jobs:
         if: steps.release.outputs.skip != 'true'
       - name: Install pinned documentation tool
         if: steps.release.outputs.skip != 'true'
-        run: cargo install --locked --git https://github.com/lambdawalker/gradle.android-repo-setup.git --tag v0.1.20 android-repo-docs
+        run: sh ./docs.sh --version
       - name: Validate documentation at immutable release source
         if: steps.release.outputs.skip != 'true'
-        working-directory: sites
         run: |
-          npm ci
-          npm run check
+          sh ./docs.sh build --check
+          node --test sites/tests/*.test.mjs
       - name: Verify unsigned candidate
         if: steps.release.outputs.skip != 'true'
         env:
