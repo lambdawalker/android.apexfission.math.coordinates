@@ -75,3 +75,9 @@ source pins require Rust and Git. No setup credentials are needed.
 Configuration and project-specific introductory Markdown live in `.project/docs/`.
 Confirmed release records and archived source identities remain authoritative.
 Documentation checks do not accept images, publish artifacts, or deploy the site.
+
+## Repository tooling
+
+Use `setup.sh` / `setup.bat` for shared JVM release tooling and generated workflows;
+use `docs.sh` / `docs.bat` for documentation. No local Python scripts are required.
+See [the release runbook](docs/releases.md) for pins, local verification and recovery.

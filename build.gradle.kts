@@ -13,6 +13,8 @@ val jitpackTagSuffix = if (providers.gradleProperty("jitpackScopedTag").orNull =
 val jitpackBuild = providers.gradleProperty("jitpackBuild").orElse("false").map { it.toBoolean() }
 val releaseRepository = providers.environmentVariable("RELEASE_REPOSITORY").orElse("maven-central")
 require(releaseRepository.get() in listOf("maven-central", "jitpack")) { "Unknown publication destination" }
+val releaseModule = providers.gradleProperty("releaseModule").orElse("coordinates")
+require(releaseModule.get() == "coordinates") { "Only the coordinates root module can be published" }
 val releaseVersion = providers.gradleProperty("releaseVersion")
 require(releaseVersion.orNull?.matches(Regex("(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)")) != false) {
     "releaseVersion must be a stable X.Y.Z version"
@@ -100,7 +102,9 @@ publishing {
 val verifyCentralReservation = tasks.register<Exec>("verifyCentralReservation") {
     group = "publishing"
     workingDir(projectDir)
-    commandLine("python3", "scripts/module_release.py", "guard", "--module", "coordinates", "--version", releaseVersion.orElse("").get())
+    val launcher = if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true))
+        listOf("cmd.exe", "/d", "/c", "setup.bat") else listOf("sh", "./setup.sh")
+    commandLine(launcher + listOf("module_release", "guard", "--module", releaseModule.get(), "--version", releaseVersion.orElse("").get()))
     doFirst {
         listOf("mavenCentralUsername", "mavenCentralPassword", "signingInMemoryKey").forEach {
             require(!providers.gradleProperty(it).orNull.isNullOrBlank()) { "Missing release credential: $it" }

@@ -9,3 +9,5 @@ __pycache__/
 /.project/docs/cache/
 /sites/.astro-app-*/
 /sites/.astro-build-*/
+/.project/setup/cache/
+/.project/setup/workflow-generation.lock
